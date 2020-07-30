@@ -46,14 +46,13 @@ import groovy.lang.Tuple6;
 import groovy.lang.Tuple7;
 import groovy.lang.Tuple8;
 import groovy.lang.Tuple9;
+import org.apache.groovy.util.ManagedIdentityConcurrentMap;
 import org.apache.groovy.util.Maps;
 import org.codehaus.groovy.classgen.asm.util.TypeUtil;
 import org.codehaus.groovy.runtime.GeneratedClosure;
 import org.codehaus.groovy.runtime.GeneratedLambda;
 import org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport;
 import org.codehaus.groovy.transform.trait.Traits;
-import org.codehaus.groovy.util.ManagedIdentityConcurrentMap;
-import org.codehaus.groovy.util.ReferenceBundle;
 import org.codehaus.groovy.vmplugin.VMPluginFactory;
 import org.objectweb.asm.Opcodes;
 
@@ -408,7 +407,7 @@ public class ClassHelper {
     }
 
     static class ClassHelperCache {
-        static ManagedIdentityConcurrentMap<Class, SoftReference<ClassNode>> classCache = new ManagedIdentityConcurrentMap<Class, SoftReference<ClassNode>>(ReferenceBundle.getWeakBundle());
+        static ManagedIdentityConcurrentMap<Class, SoftReference<ClassNode>> classCache = new ManagedIdentityConcurrentMap<>(ManagedIdentityConcurrentMap.ReferenceType.WEAK);
     }
 
     public static boolean isSAMType(final ClassNode type) {

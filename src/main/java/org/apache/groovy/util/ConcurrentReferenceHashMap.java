@@ -1,4 +1,22 @@
 /*
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+/*
  * Copyright (c) 2008-2020, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +32,7 @@
  * limitations under the License.
  */
 
-package org.codehaus.groovy.util;
+package org.apache.groovy.util;
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
@@ -22,7 +40,6 @@ package org.codehaus.groovy.util;
  * http://creativecommons.org/licenses/publicdomain
  */
 
-import com.hazelcast.internal.serialization.SerializableByConvention;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
@@ -44,12 +61,11 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import static com.hazelcast.internal.util.Preconditions.checkNotNull;
 
 /**
  * An advanced hash table supporting configurable garbage collection semantics
@@ -149,10 +165,7 @@ import static com.hazelcast.internal.util.Preconditions.checkNotNull;
  * @author Jason T. Greene
  */
 @SuppressWarnings("all")
-@SerializableByConvention
-public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
-        implements com.hazelcast.internal.util.IConcurrentMap<K, V>, Serializable {
-
+public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
     /*
      * The basic strategy is to subdivide the table among Segments,
      * each of which itself is a concurrently readable hash table.
@@ -194,28 +207,28 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 
     /* ---------------- Constants -------------- */
 
-    static final ReferenceType DEFAULT_KEY_TYPE = ReferenceType.WEAK;
+    private static final ReferenceType DEFAULT_KEY_TYPE = ReferenceType.WEAK;
 
-    static final ReferenceType DEFAULT_VALUE_TYPE = ReferenceType.STRONG;
+    private static final ReferenceType DEFAULT_VALUE_TYPE = ReferenceType.STRONG;
 
 
     /**
      * The default initial capacity for this table,
      * used when not otherwise specified in a constructor.
      */
-    static final int DEFAULT_INITIAL_CAPACITY = 16;
+    private static final int DEFAULT_INITIAL_CAPACITY = 16;
 
     /**
      * The default load factor for this table, used when not
      * otherwise specified in a constructor.
      */
-    static final float DEFAULT_LOAD_FACTOR = 0.75f;
+    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * The default concurrency level for this table, used when not
      * otherwise specified in a constructor.
      */
-    static final int DEFAULT_CONCURRENCY_LEVEL = 16;
+    private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
 
     /**
      * The maximum capacity, used if a higher value is implicitly
@@ -223,13 +236,13 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * be a power of two &lt;= 1&lt;&lt;30 to ensure that entries are indexable
      * using ints.
      */
-    static final int MAXIMUM_CAPACITY = 1 << 30;
+    private static final int MAXIMUM_CAPACITY = 1 << 30;
 
     /**
      * The maximum number of segments to allow; used to bound
      * constructor arguments.
      */
-    static final int MAX_SEGMENTS = 1 << 16;
+    private static final int MAX_SEGMENTS = 1 << 16;
 
     /**
      * Number of unsynchronized retries in size and containsValue
@@ -237,7 +250,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * unbounded retries if tables undergo continuous modification
      * which would make it impossible to obtain an accurate result.
      */
-    static final int RETRIES_BEFORE_LOCK = 2;
+    private static final int RETRIES_BEFORE_LOCK = 2;
 
     private static final long serialVersionUID = 7249069246763182397L;
 
@@ -247,23 +260,23 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * Mask value for indexing into segments. The upper bits of a
      * key's hash code are used to choose the segment.
      */
-    final int segmentMask;
+    private final int segmentMask;
 
     /**
      * Shift value for indexing within segments.
      */
-    final int segmentShift;
+    private final int segmentShift;
 
     /**
      * The segments, each of which is a specialized hash table
      */
-    final Segment<K, V>[] segments;
+    private final Segment<K, V>[] segments;
 
-    boolean identityComparisons;
+    private boolean identityComparisons;
 
-    transient Set<K> keySet;
-    transient Set<Entry<K, V>> entrySet;
-    transient Collection<V> values;
+    private transient Set<K> keySet;
+    private transient Set<Entry<K, V>> entrySet;
+    private transient Collection<V> values;
 
     /* ---------------- Small Utilities -------------- */
 
@@ -291,7 +304,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * @param hash the hash code for the key
      * @return the segment
      */
-    final Segment<K, V> segmentFor(int hash) {
+    private final Segment<K, V> segmentFor(int hash) {
         return segments[(hash >>> segmentShift) & segmentMask];
     }
 
@@ -301,7 +314,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 
     /* ---------------- Inner Classes -------------- */
 
-    interface KeyReference {
+    private interface KeyReference {
         int keyHash();
 
         Object keyRef();
@@ -310,7 +323,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
     /**
      * A weak-key reference which stores the key hash needed for reclamation.
      */
-    static final class WeakKeyReference<K> extends WeakReference<K> implements KeyReference {
+    private static final class WeakKeyReference<K> extends WeakReference<K> implements KeyReference {
         final int hash;
 
         WeakKeyReference(K key, int hash, ReferenceQueue<Object> refQueue) {
@@ -330,7 +343,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
     /**
      * A soft-key reference which stores the key hash needed for reclamation.
      */
-    static final class SoftKeyReference<K> extends SoftReference<K> implements KeyReference {
+    private static final class SoftKeyReference<K> extends SoftReference<K> implements KeyReference {
         final int hash;
 
         SoftKeyReference(K key, int hash, ReferenceQueue<Object> refQueue) {
@@ -347,7 +360,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    static final class WeakValueReference<V> extends WeakReference<V> implements KeyReference {
+    private static final class WeakValueReference<V> extends WeakReference<V> implements KeyReference {
         final Object keyRef;
         final int hash;
 
@@ -366,7 +379,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    static final class SoftValueReference<V> extends SoftReference<V> implements KeyReference {
+    private static final class SoftValueReference<V> extends SoftReference<V> implements KeyReference {
         final Object keyRef;
         final int hash;
 
@@ -397,7 +410,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * backup in case a null (pre-initialized) value is ever seen in
      * an unsynchronized access method.
      */
-    static final class HashEntry<K, V> {
+    private static final class HashEntry<K, V> {
         final Object keyRef;
         final int hash;
         volatile Object valueRef;
@@ -471,8 +484,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * subclasses from ReentrantLock opportunistically, just to
      * simplify some locking and avoid separate construction.
      */
-    @SerializableByConvention
-    static final class Segment<K, V> extends ReentrantLock implements Serializable {
+    private static final class Segment<K, V> extends ReentrantLock implements Serializable {
         /*
          * Segments maintain a table of entry lists that are ALWAYS
          * kept in a consistent state, so they can be read without locking.
@@ -1447,10 +1459,9 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * absent. Implementations which support null values <strong>must</strong>
      * override this default implementation.
      */
-    @Override
     public V applyIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        checkNotNull(key);
-        checkNotNull(mappingFunction);
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(mappingFunction);
 
         int hash = hashOf(key);
         Segment<K, V> segment = segmentFor(hash);
@@ -1458,10 +1469,9 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         return v == null ? segment.put(key, hash, null, mappingFunction, true) : v;
     }
 
-    @Override
     public V applyIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        checkNotNull(key);
-        checkNotNull(remappingFunction);
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(remappingFunction);
 
         int hash = hashOf(key);
         Segment<K, V> segment = segmentFor(hash);
@@ -1473,10 +1483,9 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         return segmentFor(hash).applyIfPresent(key, hash, remappingFunction);
     }
 
-    @Override
     public V apply(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        checkNotNull(key);
-        checkNotNull(remappingFunction);
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(remappingFunction);
 
         int hash = hashOf(key);
         Segment<K, V> segment = segmentFor(hash);
@@ -1741,7 +1750,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
+    private final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
         public K next() {
             return super.nextEntry().key();
         }
@@ -1751,7 +1760,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+    private final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
         public V next() {
             return super.nextEntry().value();
         }
@@ -1764,7 +1773,6 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
     /*
      * This class is needed for JDK5 compatibility.
      */
-    @SerializableByConvention
     protected static class SimpleEntry<K, V> implements Entry<K, V>, Serializable {
         private static final long serialVersionUID = -8499721149061103585L;
 
@@ -1822,7 +1830,6 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
      * Custom Entry class used by EntryIterator.next(), that relays setValue
      * changes to the underlying map.
      */
-    @SerializableByConvention
     protected class WriteThroughEntry extends SimpleEntry<K, V> {
         private static final long serialVersionUID = -7900634345345313646L;
 
@@ -1849,14 +1856,14 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    final class EntryIterator extends HashIterator implements Iterator<Entry<K, V>> {
+    private final class EntryIterator extends HashIterator implements Iterator<Entry<K, V>> {
         public Entry<K, V> next() {
             HashEntry<K, V> e = super.nextEntry();
             return new WriteThroughEntry(e.key(), e.value());
         }
     }
 
-    final class CachedEntryIterator extends HashIterator implements Iterator<Entry<K, V>> {
+    private final class CachedEntryIterator extends HashIterator implements Iterator<Entry<K, V>> {
         private InitializableEntry entry = new InitializableEntry();
 
         public Entry<K, V> next() {
@@ -1891,7 +1898,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    final class KeySet extends AbstractSet<K> {
+    private final class KeySet extends AbstractSet<K> {
         public Iterator<K> iterator() {
             return new KeyIterator();
         }
@@ -1917,7 +1924,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    final class Values extends AbstractCollection<V> {
+    private final class Values extends AbstractCollection<V> {
         public Iterator<V> iterator() {
             return new ValueIterator();
         }
@@ -1939,7 +1946,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    final class EntrySet extends AbstractSet<Entry<K, V>> {
+    private final class EntrySet extends AbstractSet<Entry<K, V>> {
         private final boolean cached;
 
         public EntrySet(boolean cached) {
